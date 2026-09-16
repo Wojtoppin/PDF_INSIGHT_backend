@@ -10,6 +10,15 @@ Zwróć wyłącznie obiekt JSON zgodny z podanym schematem. Zasady:
 - Wyjątek: document.title musi zawsze być niepustym tekstem, nigdy null. Jeśli
   dokument nie ma jawnego tytułu, wymyśl krótki, opisowy tytuł na podstawie treści
   (np. "Faktura za usługi serwisowe") zamiast go zmyślać jako fakt.
+- amounts: przeszukaj CAŁY dokument i wypisz KAŻDĄ kwotę powiązaną z walutą lub
+  symbolem waluty (np. "150 PLN", "12,500.00 EUR", "$99") — łącznie z podsumowaniami,
+  podatkiem VAT i wartościami częściowymi. Nie pomijaj żadnej, nawet jeśli wydaje się
+  mniej istotna niż inne.
+- entities.organizations: podawaj pełne, dosłowne nazwy tak jak w dokumencie
+  (np. "Beta Trading S.A.", nigdy skrócone do "Beta").
+- summary i keyPoints pisz na końcu, dopiero po zidentyfikowaniu wszystkich
+  kwot, dat i podmiotów — podsumowanie ma odzwierciedlać już wyodrębnione fakty,
+  a nie być pisane niezależnie od nich.
 - summary: 3-5 zdań, w języku dokumentu.
 - keyPoints: 3-7 zwięzłych punktów, w języku dokumentu.
 - Klucze JSON pozostają po angielsku, wartości tekstowe w języku dokumentu.

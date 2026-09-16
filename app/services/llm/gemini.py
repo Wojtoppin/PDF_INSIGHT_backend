@@ -24,6 +24,10 @@ class GeminiClient:
                     system_instruction=system_prompt,
                     response_mime_type="application/json",
                     response_schema=schema,
+                    # Low temperature: this is an extraction task, not a creative
+                    # one. Lower variance means more consistent, thorough scanning
+                    # of the document rather than lossy paraphrasing.
+                    temperature=0.2,
                 ),
             )
         except genai_errors.APIError as exc:

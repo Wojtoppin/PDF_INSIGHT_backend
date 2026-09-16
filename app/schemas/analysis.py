@@ -73,10 +73,15 @@ class DateEntry(StrictModel):
 
 
 class AnalysisResult(StrictModel):
+    # Field order is deliberate: Gemini's structured output generates JSON keys
+    # in schema-declaration order (autoregressive generation). Extraction fields
+    # (entities/amounts/dates/keywords) come before synthesis fields (keyPoints/
+    # summary) so the model has to identify concrete facts before narrating —
+    # cuts down on it skimming past numbers while composing prose.
     document: DocumentMeta
-    summary: str
-    keyPoints: list[str] = Field(min_length=3, max_length=7)
     entities: Entities
     amounts: list[Amount] = Field(default_factory=list)
     dates: list[DateEntry] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
+    keyPoints: list[str] = Field(min_length=3, max_length=7)
+    summary: str
