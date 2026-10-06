@@ -88,7 +88,7 @@ See `.env.example` for the full list with descriptions:
 | Variable            | Required | Default              | Purpose                                  |
 |---------------------|----------|----------------------|-------------------------------------------|
 | `GEMINI_API_KEY`    | yes      | —                    | Google Gemini API key                     |
-| `GEMINI_MODEL`      | no       | `gemini-3.6-flash`   | Must support JSON structured output       |
+| `GEMINI_MODEL`      | no       | `gemini-flash-lite-latest` | Must support JSON structured output |
 | `ALLOWED_ORIGINS`   | no       | `http://localhost:5173` | Comma-separated CORS allow-list        |
 | `MAX_FILE_SIZE_MB`  | no       | `10`                 | Rejects larger uploads before parsing     |
 | `RATE_LIMIT`        | no       | `10/minute`          | Per-IP limit on `/api/analyze` (slowapi)  |

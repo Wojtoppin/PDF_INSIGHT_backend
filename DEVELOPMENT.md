@@ -76,7 +76,7 @@ docker build -t pdf-insight-backend:dev .
 docker run --rm -p 9000:9000 \
   -e PORT=9000 \
   -e GEMINI_API_KEY="$(grep '^GEMINI_API_KEY=' .env | cut -d= -f2-)" \
-  -e GEMINI_MODEL=gemini-3.6-flash \
+  -e GEMINI_MODEL=gemini-flash-lite-latest \
   pdf-insight-backend:dev
 
 curl http://localhost:9000/api/health
