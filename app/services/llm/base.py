@@ -7,10 +7,17 @@ SchemaT = TypeVar("SchemaT", bound=BaseModel)
 
 class LLMUnavailableError(Exception):
     """Raised by an LLMClient adapter when the call to the provider itself
-    fails (network error, transient outage, rate limit) — distinct from the
-    provider returning a response that fails schema validation. Provider-
-    agnostic on purpose, so app/services/analysis.py doesn't need to know
-    which SDK-specific exceptions a given adapter can raise."""
+    fails (network error, transient outage) — distinct from the provider
+    returning a response that fails schema validation. Provider-agnostic on
+    purpose, so app/services/analysis.py doesn't need to know which
+    SDK-specific exceptions a given adapter can raise."""
+
+
+class LLMRateLimitedError(LLMUnavailableError):
+    """Raised when the provider rejects the call for being over quota/rate
+    limit. Kept distinct from LLMUnavailableError because retrying
+    immediately against an exhausted quota will just fail again — the
+    caller should skip its one-retry policy and surface this immediately."""
 
 
 class LLMClient(Protocol):

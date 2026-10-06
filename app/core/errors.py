@@ -35,3 +35,8 @@ class SuspiciousContentError(PDFInsightError):
 class AnalysisFailedError(PDFInsightError):
     status_code = 502
     message = "Nie udało się przeanalizować dokumentu. Spróbuj ponownie."
+
+
+class RateLimitedError(PDFInsightError):
+    status_code = 429
+    message = "Osiągnięto limit zapytań do AI. Spróbuj ponownie za chwilę."

@@ -4,7 +4,7 @@ from google.genai import types
 from pydantic import BaseModel
 
 from app.config import settings
-from app.services.llm.base import LLMUnavailableError
+from app.services.llm.base import LLMRateLimitedError, LLMUnavailableError
 
 _client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -31,7 +31,9 @@ class GeminiClient:
                 ),
             )
         except genai_errors.APIError as exc:
-            # Covers both client errors (bad request, quota) and server errors
+            if exc.code == 429:
+                raise LLMRateLimitedError(str(exc)) from exc
+            # Covers other client errors (bad request) and server errors
             # (transient 5xx, "model overloaded"). The caller treats this the
             # same as an invalid response: retry once, then a clear error.
             raise LLMUnavailableError(str(exc)) from exc

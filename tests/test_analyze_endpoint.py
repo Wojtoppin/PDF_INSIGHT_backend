@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.api.routes import get_llm_client
 from app.main import app
-from app.services.llm.base import LLMUnavailableError
+from app.services.llm.base import LLMRateLimitedError, LLMUnavailableError
 
 VALID_RESPONSE = {
     "document": {
@@ -84,6 +84,36 @@ def test_analyze_returns_clean_error_when_provider_is_unavailable(sample_pdf_byt
 
     assert response.status_code == 502
     assert "error" in response.json()
+
+
+class RateLimitedLLMClient:
+    """Simulates Gemini returning 429 RESOURCE_EXHAUSTED (quota exceeded)."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def generate_structured(self, *, system_prompt: str, user_content: str, schema: type) -> str:
+        self.calls += 1
+        raise LLMRateLimitedError("429 RESOURCE_EXHAUSTED: quota exceeded")
+
+
+def test_analyze_returns_429_without_retrying_when_rate_limited(sample_pdf_bytes: bytes) -> None:
+    fake_client = RateLimitedLLMClient()
+    app.dependency_overrides[get_llm_client] = lambda: fake_client
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/api/analyze",
+            files={"file": ("test.pdf", sample_pdf_bytes, "application/pdf")},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 429
+    assert "error" in response.json()
+    # Retrying immediately against an exhausted quota would just fail again,
+    # so the one-retry policy must be skipped for this error specifically.
+    assert fake_client.calls == 1
 
 
 def test_analyze_rejects_pdf_without_text_layer(blank_pdf_bytes: bytes) -> None:

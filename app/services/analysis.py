@@ -3,10 +3,10 @@ import logging
 
 from pydantic import ValidationError
 
-from app.core.errors import AnalysisFailedError, SuspiciousContentError
+from app.core.errors import AnalysisFailedError, RateLimitedError, SuspiciousContentError
 from app.core.security import looks_like_prompt_injection
 from app.schemas.analysis import AnalysisResult
-from app.services.llm.base import LLMClient, LLMUnavailableError
+from app.services.llm.base import LLMClient, LLMRateLimitedError, LLMUnavailableError
 from app.services.llm.prompts import RETRY_PROMPT_SUFFIX, SYSTEM_PROMPT, build_user_prompt
 from app.services.pdf_extraction import ExtractedDocument
 
@@ -21,12 +21,20 @@ def analyze_document(
 
     user_prompt = build_user_prompt(document.text, file_name, document.pages)
 
-    result = _call_and_validate(llm_client, user_prompt)
+    try:
+        result = _call_and_validate(llm_client, user_prompt)
+    except LLMRateLimitedError:
+        # Retrying immediately against an exhausted quota will just fail
+        # again — skip the one-retry policy and surface it right away.
+        raise RateLimitedError() from None
     if result is not None:
         return result
 
     logger.warning("Gemini response failed schema validation, retrying once")
-    result = _call_and_validate(llm_client, user_prompt + RETRY_PROMPT_SUFFIX)
+    try:
+        result = _call_and_validate(llm_client, user_prompt + RETRY_PROMPT_SUFFIX)
+    except LLMRateLimitedError:
+        raise RateLimitedError() from None
     if result is not None:
         return result
 
@@ -40,6 +48,8 @@ def _call_and_validate(llm_client: LLMClient, user_prompt: str) -> AnalysisResul
             user_content=user_prompt,
             schema=AnalysisResult,
         )
+    except LLMRateLimitedError:
+        raise
     except LLMUnavailableError as exc:
         logger.warning("LLM provider call failed: %s", exc)
         return None
